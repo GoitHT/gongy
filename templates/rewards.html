@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block title %}兑换奖励 - 情侣积分系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>🎁 兑换奖励</h1>
+    <p class="page-subtitle">用积分换取心仪的奖励吧</p>
+</div>
+
+<!-- 当前积分显示 -->
+<div class="current-points-banner">
+    <span class="banner-label">当前可用积分：</span>
+    <span class="banner-points">{{ total_points }}</span>
+</div>
+
+<!-- 新增奖励表单 -->
+<div class="card" style="margin-bottom: 30px;">
+    <div class="card-header">
+        <h3>➕ 新增奖励</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_reward') }}" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">奖励名称 *</label>
+                    <input type="text" id="name" name="name" placeholder="例如：奶茶一杯" required>
+                </div>
+                <div class="form-group">
+                    <label for="cost_points">所需积分 *</label>
+                    <input type="number" id="cost_points" name="cost_points" placeholder="例如：50" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">奖励说明</label>
+                <input type="text" id="description" name="description" placeholder="可选，例如：喜欢的奶茶店任选">
+            </div>
+            <button type="submit" class="btn btn-primary">创建奖励</button>
+        </form>
+    </div>
+</div>
+
+<!-- 奖励列表 -->
+<div class="section">
+    <div class="section-header">
+        <h2>🌟 可兑换奖励</h2>
+        <span class="record-count">共 {{ rewards|length }} 个奖励</span>
+    </div>
+    
+    {% if rewards %}
+        <div class="rewards-grid">
+            {% for reward in rewards %}
+                {% set can_exchange = total_points >= reward.cost_points %}
+                <div class="reward-card {% if can_exchange %}can-exchange{% endif %}">
+                    <div class="reward-icon">
+                        {% if reward.cost_points <= 100 %}🧋
+                        {% elif reward.cost_points <= 300 %}🎬
+                        {% elif reward.cost_points <= 500 %}👗
+                        {% else %}✈️
+                        {% endif %}
+                    </div>
+                    <div class="reward-info">
+                        <h3 class="reward-name">{{ reward.name }}</h3>
+                        {% if reward.description %}
+                            <p class="reward-description">{{ reward.description }}</p>
+                        {% endif %}
+                        <div class="reward-cost">
+                            <span class="cost-label">需要</span>
+                            <span class="cost-points">{{ reward.cost_points }}</span>
+                            <span class="cost-label">积分</span>
+                        </div>
+                    </div>
+                    <div class="reward-action">
+                        {% if can_exchange %}
+                            <form method="POST" action="{{ url_for('exchange_reward', reward_id=reward.id) }}" onsubmit="return confirm('确定要兑换「{{ reward.name }}」吗？');">
+                                <button type="submit" class="btn btn-exchange">
+                                    ✓ 立即兑换
+                                </button>
+                            </form>
+                            <div class="exchange-hint">可以兑换啦！</div>
+                        {% else %}
+                            <button class="btn btn-disabled" disabled>
+                                还差 {{ reward.cost_points - total_points }} 分
+                            </button>
+                            <div class="exchange-hint need-more">继续加油！</div>
+                        {% endif %}
+                    </div>
+                    <div class="reward-manage" style="margin-top: 15px; display: flex; gap: 10px; justify-content: center;">
+                        <button class="btn-small btn-edit" onclick="editReward({{ reward.id }}, '{{ reward.name }}', {{ reward.cost_points }}, '{{ reward.description or '' }}', {{ reward.enabled|lower }})">
+                            编辑
+                        </button>
+                        <form method="POST" action="{{ url_for('delete_reward', reward_id=reward.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除「{{ reward.name }}」吗？');">
+                            <button type="submit" class="btn-small btn-delete">删除</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">🎁</div>
+            <div class="empty-text">还没有奖励哦</div>
+            <div class="empty-hint">在上方创建第一个奖励吧！</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 编辑奖励对话框 -->
+<div id="editRewardModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>编辑奖励</h3>
+            <button class="modal-close" onclick="closeRewardModal()">×</button>
+        </div>
+        <form id="editRewardForm" method="POST" class="form">
+            <div class="form-group">
+                <label for="edit_reward_name">奖励名称 *</label>
+                <input type="text" id="edit_reward_name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_reward_cost">所需积分 *</label>
+                <input type="number" id="edit_reward_cost" name="cost_points" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_reward_description">奖励说明</label>
+                <input type="text" id="edit_reward_description" name="description">
+            </div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="edit_reward_enabled" name="enabled">
+                    <span>启用此奖励</span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeRewardModal()">取消</button>
+                <button type="submit" class="btn btn-primary">保存更改</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editReward(id, name, cost_points, description, enabled) {
+    document.getElementById('editRewardForm').action = '/rewards/edit/' + id;
+    document.getElementById('edit_reward_name').value = name;
+    document.getElementById('edit_reward_cost').value = cost_points;
+    document.getElementById('edit_reward_description').value = description;
+    document.getElementById('edit_reward_enabled').checked = enabled;
+    document.getElementById('editRewardModal').style.display = 'flex';
+}
+
+function closeRewardModal() {
+    document.getElementById('editRewardModal').style.display = 'none';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const modal = document.getElementById('editRewardModal');
+    if (event.target == modal) {
+        closeRewardModal();
+    }
+}
+</script>
+{% endblock %}

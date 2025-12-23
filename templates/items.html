@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}积分项目管理 - 情侣积分系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>⚙️ 积分项目管理</h1>
+    <p class="page-subtitle">配置可获得积分的行为模板</p>
+</div>
+
+<!-- 新增项目表单 -->
+<div class="card">
+    <div class="card-header">
+        <h3>➕ 新增积分项目</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" action="{{ url_for('add_item') }}" class="form">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">项目名称 *</label>
+                    <input type="text" id="name" name="name" placeholder="例如：学习超过4小时" required>
+                </div>
+                <div class="form-group">
+                    <label for="points">积分分值 *</label>
+                    <input type="number" id="points" name="points" placeholder="例如：20" required>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="description">项目说明</label>
+                <input type="text" id="description" name="description" placeholder="可选，例如：认真学习值得鼓励">
+            </div>
+            <button type="submit" class="btn btn-primary">创建项目</button>
+        </form>
+    </div>
+</div>
+
+<!-- 项目列表 -->
+<div class="section">
+    <div class="section-header">
+        <h2>📝 已有项目</h2>
+        <span class="record-count">共 {{ items|length }} 个项目</span>
+    </div>
+    
+    {% if items %}
+        <div class="items-grid">
+            {% for item in items %}
+                <div class="item-card {% if not item.enabled %}disabled{% endif %}">
+                    <div class="item-header">
+                        <h3 class="item-name">{{ item.name }}</h3>
+                        <span class="item-points">+{{ item.points }}分</span>
+                    </div>
+                    {% if item.description %}
+                        <p class="item-description">{{ item.description }}</p>
+                    {% endif %}
+                    <div class="item-status">
+                        {% if item.enabled %}
+                            <span class="status-badge status-active">✓ 已启用</span>
+                        {% else %}
+                            <span class="status-badge status-inactive">○ 已停用</span>
+                        {% endif %}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-small btn-edit" onclick="editItem({{ item.id }}, '{{ item.name }}', {{ item.points }}, '{{ item.description or '' }}', {{ item.enabled|lower }})">
+                            编辑
+                        </button>
+                        <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除「{{ item.name }}」吗？');">
+                            <button type="submit" class="btn-small btn-delete">删除</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <div class="empty-text">还没有积分项目</div>
+            <div class="empty-hint">在上方创建第一个积分项目吧！</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 编辑对话框 -->
+<div id="editModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>编辑积分项目</h3>
+            <button class="modal-close" onclick="closeModal()">×</button>
+        </div>
+        <form id="editForm" method="POST" class="form">
+            <div class="form-group">
+                <label for="edit_name">项目名称 *</label>
+                <input type="text" id="edit_name" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_points">积分分值 *</label>
+                <input type="number" id="edit_points" name="points" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_description">项目说明</label>
+                <input type="text" id="edit_description" name="description">
+            </div>
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" id="edit_enabled" name="enabled">
+                    <span>启用此项目</span>
+                </label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
+                <button type="submit" class="btn btn-primary">保存更改</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function editItem(id, name, points, description, enabled) {
+    document.getElementById('editForm').action = '/items/edit/' + id;
+    document.getElementById('edit_name').value = name;
+    document.getElementById('edit_points').value = points;
+    document.getElementById('edit_description').value = description;
+    document.getElementById('edit_enabled').checked = enabled;
+    document.getElementById('editModal').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('editModal').style.display = 'none';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const modal = document.getElementById('editModal');
+    if (event.target == modal) {
+        closeModal();
+    }
+}
+</script>
+{% endblock %}

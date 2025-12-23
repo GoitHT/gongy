@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}兑换记录 - 情侣积分系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>📜 兑换记录</h1>
+    <p class="page-subtitle">查看所有兑换历史</p>
+</div>
+
+<!-- 统计信息 -->
+<div class="stats-card">
+    <div class="stat-item">
+        <div class="stat-label">累计兑换</div>
+        <div class="stat-value">{{ exchanges|length }}</div>
+        <div class="stat-unit">次</div>
+    </div>
+    <div class="stat-divider"></div>
+    <div class="stat-item">
+        <div class="stat-label">累计消耗</div>
+        <div class="stat-value">{{ total_spent }}</div>
+        <div class="stat-unit">积分</div>
+    </div>
+</div>
+
+<!-- 兑换记录列表 -->
+<div class="section">
+    <div class="section-header">
+        <h2>🎉 兑换历史</h2>
+    </div>
+    
+    {% if exchanges %}
+        <div class="records-list">
+            {% for exchange in exchanges %}
+                <div class="record-card exchange-record">
+                    <div class="record-icon">🎁</div>
+                    <div class="record-info">
+                        <div class="record-title">{{ exchange.reward_name }}</div>
+                        <div class="record-time">{{ exchange.exchanged_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    <div class="record-points negative">-{{ exchange.cost_points }}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <div class="empty-text">还没有兑换记录</div>
+            <div class="empty-hint">快去兑换奖励吧！</div>
+            <a href="{{ url_for('rewards') }}" class="btn btn-primary" style="margin-top: 20px;">
+                前往兑换
+            </a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 情侣积分系统{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1>💖 我的积分</h1>
+</div>
+
+<!-- 总积分卡片 -->
+<div class="total-points-card">
+    <div class="points-icon">✨</div>
+    <div class="points-info">
+        <div class="points-label">当前总积分</div>
+        <div class="points-value">{{ total_points }}</div>
+        <div class="points-hint">继续加油，离下一个奖励更近了！</div>
+    </div>
+</div>
+
+<!-- 快捷操作 -->
+<div class="quick-actions">
+    <a href="{{ url_for('add_record') }}" class="btn btn-primary">
+        <span class="btn-icon">➕</span>
+        记录积分
+    </a>
+    <button onclick="showManualAddModal()" class="btn btn-secondary">
+        <span class="btn-icon">✏️</span>
+        手动添加
+    </button>
+    <a href="{{ url_for('rewards') }}" class="btn btn-secondary">
+        <span class="btn-icon">🎁</span>
+        兑换奖励
+    </a>
+</div>
+
+<!-- 积分记录列表 -->
+<div class="section">
+    <div class="section-header">
+        <h2>📋 积分记录</h2>
+        <span class="record-count">共 {{ logs|length }} 条记录</span>
+    </div>
+    
+    {% if logs %}
+        <div class="records-list">
+            {% for log in logs %}
+                <div class="record-card">
+                    <div class="record-icon">🌟</div>
+                    <div class="record-info">
+                        <div class="record-title">{{ log.item_name }}</div>
+                        <div class="record-time">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                    </div>
+                    <div class="record-points {% if log.points > 0 %}positive{% else %}negative{% endif %}">
+                        {% if log.points > 0 %}+{% endif %}{{ log.points }}
+                    </div>
+                    <div class="record-actions" style="margin-left: 10px; display: flex; gap: 8px;">
+                        <button class="btn-small btn-edit" onclick="editLog({{ log.id }}, '{{ log.item_name }}', {{ log.points }})">
+                            编辑
+                        </button>
+                        <form method="POST" action="{{ url_for('delete_log', log_id=log.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除这条记录吗？');">
+                            <button type="submit" class="btn-small btn-delete">删除</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📝</div>
+            <div class="empty-text">还没有积分记录哦</div>
+            <div class="empty-hint">快去记录第一条吧！</div>
+            <a href="{{ url_for('add_record') }}" class="btn btn-primary" style="margin-top: 20px;">
+                立即记录
+            </a>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 手动添加积分对话框 -->
+<div id="manualAddModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>手动添加积分记录</h3>
+            <button class="modal-close" onclick="closeManualAddModal()">×</button>
+        </div>
+        <form method="POST" action="{{ url_for('add_manual_log') }}" class="form">
+            <div class="form-group">
+                <label for="manual_item_name">项目名称 *</label>
+                <input type="text" id="manual_item_name" name="item_name" placeholder="例如：额外奖励" required>
+            </div>
+            <div class="form-group">
+                <label for="manual_points">积分（正数或负数）*</label>
+                <input type="number" id="manual_points" name="points" placeholder="例如：10 或 -5" required>
+                <small style="color: var(--text-light); font-size: 13px;">提示：输入正数增加积分，输入负数减少积分</small>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeManualAddModal()">取消</button>
+                <button type="submit" class="btn btn-primary">确认添加</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- 编辑积分记录对话框 -->
+<div id="editLogModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3>编辑积分记录</h3>
+            <button class="modal-close" onclick="closeEditLogModal()">×</button>
+        </div>
+        <form id="editLogForm" method="POST" class="form">
+            <div class="form-group">
+                <label for="edit_log_name">项目名称 *</label>
+                <input type="text" id="edit_log_name" name="item_name" required>
+            </div>
+            <div class="form-group">
+                <label for="edit_log_points">积分（正数或负数）*</label>
+                <input type="number" id="edit_log_points" name="points" required>
+                <small style="color: var(--text-light); font-size: 13px;">提示：输入正数增加积分，输入负数减少积分</small>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn btn-secondary" onclick="closeEditLogModal()">取消</button>
+                <button type="submit" class="btn btn-primary">保存更改</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function showManualAddModal() {
+    document.getElementById('manualAddModal').style.display = 'flex';
+}
+
+function closeManualAddModal() {
+    document.getElementById('manualAddModal').style.display = 'none';
+}
+
+function editLog(id, name, points) {
+    document.getElementById('editLogForm').action = '/logs/edit/' + id;
+    document.getElementById('edit_log_name').value = name;
+    document.getElementById('edit_log_points').value = points;
+    document.getElementById('editLogModal').style.display = 'flex';
+}
+
+function closeEditLogModal() {
+    document.getElementById('editLogModal').style.display = 'none';
+}
+
+// 点击模态框外部关闭
+window.onclick = function(event) {
+    const manualModal = document.getElementById('manualAddModal');
+    const editModal = document.getElementById('editLogModal');
+    if (event.target == manualModal) {
+        closeManualAddModal();
+    }
+    if (event.target == editModal) {
+        closeEditLogModal();
+    }
+}
+</script>
+{% endblock %}
