@@ -1,59 +1,59 @@
 {% extends "base.html" %}
 
-{% block title %}加分 - 情侣积分系统{% endblock %}
+{% block title %}扣分 - 情侣积分系统{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h1>📝 加分</h1>
-    <p class="page-subtitle">选择一个加分项目快速记录</p>
+    <h1>⚠️ 扣分</h1>
+    <p class="page-subtitle">选择一个扣分项目进行记录</p>
 </div>
 
-<!-- 新增加分项目表单 -->
+<!-- 新增扣分项目表单 -->
 <div class="card" style="margin-bottom: 30px;">
     <div class="card-header">
-        <h3>➕ 新增加分项目</h3>
+        <h3>➕ 新增扣分项目</h3>
     </div>
     <div class="card-body">
         <form method="POST" action="{{ url_for('add_item') }}" class="form">
             <div class="form-row">
                 <div class="form-group">
                     <label for="name">项目名称 *</label>
-                    <input type="text" id="name" name="name" placeholder="例如：学习满4小时" required>
+                    <input type="text" id="name" name="name" placeholder="例如：学习少于四个小时" required>
                 </div>
                 <div class="form-group">
-                    <label for="points">积分分值（正数）*</label>
-                    <input type="number" id="points" name="points" placeholder="例如：10" min="1" required>
-                    <small style="color: var(--text-light); font-size: 13px;">提示：请输入正数，如 10</small>
+                    <label for="points">扣除积分（负数）*</label>
+                    <input type="number" id="points" name="points" placeholder="例如：-10" max="-1" required>
+                    <small style="color: var(--text-light); font-size: 13px;">提示：请输入负数，如 -10</small>
                 </div>
             </div>
             <div class="form-group">
                 <label for="description">项目说明</label>
-                <input type="text" id="description" name="description" placeholder="可选，例如：认真学习值得鼓励">
+                <input type="text" id="description" name="description" placeholder="可选，例如：学习时长不够">
             </div>
-            <button type="submit" class="btn btn-primary">创建加分项目</button>
+            <button type="submit" class="btn btn-warning">创建扣分项目</button>
         </form>
     </div>
 </div>
 
-<div class="card" style="max-width: 600px; margin: 0 auto;">
+<div class="card" style="max-width: 600px; margin: 0 auto; border: 2px solid var(--error);">
     <div class="card-body">
         {% if items %}
             <form method="POST" action="{{ url_for('submit_record') }}" class="form">
                 <div class="form-group">
-                    <label for="item_id">选择加分项目 *</label>
+                    <label for="item_id">选择扣分项目 *</label>
                     <select id="item_id" name="item_id" required onchange="updatePreview()">
                         <option value="">-- 请选择 --</option>
                         {% for item in items %}
                             <option value="{{ item.id }}" data-points="{{ item.points }}" data-name="{{ item.name }}" data-desc="{{ item.description or '' }}">
-                                {{ item.name }} (+{{ item.points }}分)
+                                {{ item.name }} ({{ item.points }}分)
                             </option>
                         {% endfor %}
                     </select>
                 </div>
 
                 <!-- 预览卡片 -->
-                <div id="preview" class="preview-card" style="display: none;">
-                    <div class="preview-header">即将记录</div>
+                <div id="preview" class="preview-card" style="display: none; background: #fff2f0; border-color: var(--error);">
+                    <div class="preview-header" style="color: var(--error);">即将记录</div>
                     <div class="preview-content">
                         <div class="preview-item">
                             <span class="preview-label">项目：</span>
@@ -61,7 +61,7 @@
                         </div>
                         <div class="preview-item">
                             <span class="preview-label">积分：</span>
-                            <span id="preview_points" class="preview-value points-highlight"></span>
+                            <span id="preview_points" class="preview-value" style="color: var(--error); font-size: 18px; font-weight: bold;"></span>
                         </div>
                         <div id="preview_desc_container" class="preview-item" style="display: none;">
                             <span class="preview-label">说明：</span>
@@ -72,7 +72,7 @@
 
                 <div class="form-actions" style="margin-top: 30px;">
                     <a href="{{ url_for('index') }}" class="btn btn-secondary">取消</a>
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-warning">
                         <span class="btn-icon">✓</span>
                         确认记录
                     </button>
@@ -81,8 +81,8 @@
         {% else %}
             <div class="empty-state">
                 <div class="empty-icon">📦</div>
-                <div class="empty-text">暂无可用的加分项目</div>
-                <div class="empty-hint">请先在积分项目管理中创建项目</div>
+                <div class="empty-text">暂无可用的扣分项目</div>
+                <div class="empty-hint">请先在积分项目管理中创建扣分项目</div>
                 <a href="{{ url_for('items') }}" class="btn btn-primary" style="margin-top: 20px;">
                     前往创建
                 </a>
@@ -103,7 +103,7 @@ function updatePreview() {
         const desc = selectedOption.getAttribute('data-desc');
         
         document.getElementById('preview_name').textContent = name;
-        document.getElementById('preview_points').textContent = '+' + points + ' 分';
+        document.getElementById('preview_points').textContent = points + ' 分';
         
         if (desc) {
             document.getElementById('preview_desc').textContent = desc;

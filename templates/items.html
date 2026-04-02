@@ -34,20 +34,21 @@
     </div>
 </div>
 
-<!-- 项目列表 -->
+<!-- 加分项目列表 -->
 <div class="section">
     <div class="section-header">
-        <h2>📝 已有项目</h2>
-        <span class="record-count">共 {{ items|length }} 个项目</span>
+        <h2>➕ 加分项目</h2>
+        <span class="record-count">共 {{ items|selectattr('points', 'gt', 0)|list|length }} 个项目</span>
     </div>
     
-    {% if items %}
+    {% set positive_items = items|selectattr('points', 'gt', 0)|list %}
+    {% if positive_items %}
         <div class="items-grid">
-            {% for item in items %}
-                <div class="item-card {% if not item.enabled %}disabled{% endif %}">
+            {% for item in positive_items %}
+                <div class="item-card positive-item {% if not item.enabled %}disabled{% endif %}">
                     <div class="item-header">
                         <h3 class="item-name">{{ item.name }}</h3>
-                        <span class="item-points">+{{ item.points }}分</span>
+                        <span class="item-points positive-points">+{{ item.points }}分</span>
                     </div>
                     {% if item.description %}
                         <p class="item-description">{{ item.description }}</p>
@@ -73,8 +74,54 @@
     {% else %}
         <div class="empty-state">
             <div class="empty-icon">📦</div>
-            <div class="empty-text">还没有积分项目</div>
-            <div class="empty-hint">在上方创建第一个积分项目吧！</div>
+            <div class="empty-text">还没有加分项目</div>
+            <div class="empty-hint">在上方创建第一个加分项目吧！</div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- 扣分项目列表 -->
+<div class="section">
+    <div class="section-header">
+        <h2>➖ 扣分项目</h2>
+        <span class="record-count">共 {{ items|selectattr('points', 'lt', 0)|list|length }} 个项目</span>
+    </div>
+    
+    {% set negative_items = items|selectattr('points', 'lt', 0)|list %}
+    {% if negative_items %}
+        <div class="items-grid">
+            {% for item in negative_items %}
+                <div class="item-card negative-item {% if not item.enabled %}disabled{% endif %}">
+                    <div class="item-header">
+                        <h3 class="item-name">{{ item.name }}</h3>
+                        <span class="item-points negative-points">{{ item.points }}分</span>
+                    </div>
+                    {% if item.description %}
+                        <p class="item-description">{{ item.description }}</p>
+                    {% endif %}
+                    <div class="item-status">
+                        {% if item.enabled %}
+                            <span class="status-badge status-active">✓ 已启用</span>
+                        {% else %}
+                            <span class="status-badge status-inactive">○ 已停用</span>
+                        {% endif %}
+                    </div>
+                    <div class="item-actions">
+                        <button class="btn-small btn-edit" onclick="editItem({{ item.id }}, '{{ item.name }}', {{ item.points }}, '{{ item.description or '' }}', {{ item.enabled|lower }})">
+                            编辑
+                        </button>
+                        <form method="POST" action="{{ url_for('delete_item', item_id=item.id) }}" style="display: inline;" onsubmit="return confirm('确定要删除「{{ item.name }}」吗？');">
+                            <button type="submit" class="btn-small btn-delete">删除</button>
+                        </form>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">📦</div>
+            <div class="empty-text">还没有扣分项目</div>
+            <div class="empty-hint">可以创建一些约束项目</div>
         </div>
     {% endif %}
 </div>

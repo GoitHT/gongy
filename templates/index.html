@@ -21,7 +21,11 @@
 <div class="quick-actions">
     <a href="{{ url_for('add_record') }}" class="btn btn-primary">
         <span class="btn-icon">➕</span>
-        记录积分
+        加分
+    </a>
+    <a href="{{ url_for('subtract_record') }}" class="btn btn-warning">
+        <span class="btn-icon">➖</span>
+        扣分
     </a>
     <button onclick="showManualAddModal()" class="btn btn-secondary">
         <span class="btn-icon">✏️</span>

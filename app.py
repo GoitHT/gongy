@@ -120,10 +120,18 @@ def delete_item(item_id):
 
 @app.route('/add-record')
 def add_record():
-    """新增积分记录页面"""
-    # 只显示启用的积分项目
-    items = PointItem.query.filter_by(enabled=True).order_by(PointItem.name).all()
+    """新增积分记录页面（加分）"""
+    # 只显示启用的正分项目
+    items = PointItem.query.filter(PointItem.enabled==True, PointItem.points > 0).order_by(PointItem.name).all()
     return render_template('add_record.html', items=items)
+
+
+@app.route('/subtract-record')
+def subtract_record():
+    """扣分记录页面"""
+    # 只显示启用的负分项目
+    items = PointItem.query.filter(PointItem.enabled==True, PointItem.points < 0).order_by(PointItem.name).all()
+    return render_template('subtract_record.html', items=items)
 
 
 @app.route('/add-record/submit', methods=['POST'])
