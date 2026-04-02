@@ -89,6 +89,44 @@ gong/
 - 首次运行请先执行 `init_db.py` 初始化数据库
 - 可以根据需要修改初始数据
 
+## 部署到 Render（数据持久化）
+
+如果你要部署到 Render，建议使用 Render 的 PostgreSQL，而不是 SQLite 文件。
+
+原因：
+- SQLite 是单文件数据库，Render Web Service 实例重启/重建后，本地文件可能丢失。
+- PostgreSQL 是独立托管数据库，服务重启后数据仍然保留。
+
+### 1. 在 Render 创建 PostgreSQL
+
+1. 进入 Render 控制台，创建 PostgreSQL。
+2. 记下连接串（Render 会自动提供 `DATABASE_URL`）。
+
+### 2. 创建 Web Service 并配置环境变量
+
+关键环境变量：
+- `DATABASE_URL`：绑定你创建的 PostgreSQL。
+- `SECRET_KEY`：建议设置为随机长字符串。
+
+本项目的 `app.py` 已支持：
+- 有 `DATABASE_URL` 时使用 PostgreSQL。
+- 没有 `DATABASE_URL` 时回退到本地 SQLite（便于本地开发）。
+
+### 3. 构建与启动命令
+
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `gunicorn app:app`
+
+### 4. 初始化数据库结构和初始数据
+
+首次部署后，在 Render Shell 执行：
+
+```bash
+python init_db.py
+```
+
+脚本会创建表并写入初始积分项目/奖励；如果已有数据会跳过，避免重复初始化。
+
 ## 许可
 
 MIT License
