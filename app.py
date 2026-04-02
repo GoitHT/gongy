@@ -1,10 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from models import db, PointItem, PointLog, Reward, RewardExchange
+from init_db import seed_initial_data
 from datetime import datetime
 import os
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'  # 用于 flash 消息
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key')  # 用于 flash 消息
 # Render 会注入 DATABASE_URL（PostgreSQL），本地未设置时回退到 SQLite。
 database_url = os.getenv('DATABASE_URL', 'sqlite:///points.db')
 if database_url.startswith('postgres://'):
@@ -20,6 +21,11 @@ app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
 
 # 初始化数据库
 db.init_app(app)
+
+# 首次部署可能未手动初始化，启动时自动确保表存在，避免访问页面时报 500。
+with app.app_context():
+    db.create_all()
+    seed_initial_data()
 
 
 # ==================== 辅助函数 ====================
